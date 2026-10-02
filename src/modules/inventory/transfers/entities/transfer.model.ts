@@ -60,17 +60,9 @@ export class Transfer {
 
 export const TransferSchema = SchemaFactory.createForClass(Transfer);
 
-// Exclude soft-deleted documents from all find queries
-function excludeDeleted(this: any, next: () => void) {
-  if (!this.getQuery()['isDeleted']) {
-    this.where({ isDeleted: { $ne: true } });
-  }
-  next();
-}
-TransferSchema.pre('find', excludeDeleted);
-TransferSchema.pre('findOne', excludeDeleted);
-TransferSchema.pre('findOneAndUpdate', excludeDeleted);
-TransferSchema.pre('countDocuments', excludeDeleted);
+// NOTE: soft-delete filtering (isDeleted: { $ne: true }) is applied
+// explicitly in TransfersService — pre-hooks with next() are unreliable
+// inside Mongoose ACID sessions and cause "next is not a function" errors.
 
 // Compound index for common list queries
 TransferSchema.index({ status: 1, createdAt: -1 });

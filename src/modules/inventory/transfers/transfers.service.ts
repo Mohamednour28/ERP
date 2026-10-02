@@ -78,7 +78,8 @@ export class TransfersService {
       search,
     } = rawQuery;
 
-    const filter: Record<string, any> = {};
+    // Always exclude soft-deleted records (filter applied here, not via pre-hook)
+    const filter: Record<string, any> = { isDeleted: { $ne: true } };
 
     if (status) filter.status = status;
 
@@ -143,7 +144,7 @@ export class TransfersService {
   // ─── FIND ONE ─────────────────────────────────────────────────────────────
   async findOne(id: string) {
     const transfer = await this.transferModel
-      .findById(id)
+      .findOne({ _id: id, isDeleted: { $ne: true } })
       .populate('fromWarehouseId', 'code name location')
       .populate('toWarehouseId', 'code name location')
       .lean()
@@ -249,15 +250,8 @@ export class TransfersService {
       };
     } catch (error) {
       await session.abortTransaction();
-      if (
-        error instanceof BadRequestException ||
-        error instanceof NotFoundException
-      ) {
-        throw error;
-      }
-      throw new BadRequestException(
-        `Failed to post transfer: ${(error as Error).message}`,
-      );
+      // Always re-throw the original error — never swallow the real cause
+      throw error;
     } finally {
       session.endSession();
     }
