@@ -42,6 +42,7 @@ export class TransfersController {
     return this.transfersService.findOne(id);
   }
 
+  /** PATCH /:id — generic update OR post when body contains { status: "Posted" } */
   @Patch(':id')
   @RequirePermissions('edit:inventory')
   async update(
@@ -52,6 +53,7 @@ export class TransfersController {
     return this.transfersService.update(id, updateTransferDto, userId);
   }
 
+  /** PUT /:id — same as PATCH */
   @Put(':id')
   @RequirePermissions('edit:inventory')
   async replace(
@@ -60,6 +62,20 @@ export class TransfersController {
     @CurrentUser('id') userId: string,
   ) {
     return this.transfersService.update(id, updateTransferDto, userId);
+  }
+
+  /** POST /:id/post — explicit posting endpoint (executes stock movement) */
+  @Post(':id/post')
+  @RequirePermissions('edit:inventory')
+  async post(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.transfersService.update(id, { status: 'Posted' }, userId);
+  }
+
+  /** POST /:id/cancel — cancel a transfer */
+  @Post(':id/cancel')
+  @RequirePermissions('edit:inventory')
+  async cancel(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.transfersService.cancel(id, userId);
   }
 
   @Delete(':id')
